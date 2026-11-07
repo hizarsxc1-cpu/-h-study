@@ -4,6 +4,7 @@ import android.app.*;
 import android.os.*;
 import android.content.*;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,6 +15,7 @@ import android.text.InputType;
 import java.util.*;
 
 public class MainActivity extends Activity {
+    interface Saver { void save(String[] values); }
     private static final int BG=Color.rgb(11,11,18), CARD=Color.rgb(25,24,38), PURPLE=Color.rgb(167,139,250), WHITE=Color.WHITE, MUTED=Color.rgb(164,160,181);
     private DB db; private LinearLayout root, content, nav; private String page="Home";
     private final String[] tabs={"Home","Tasks","Schedule","Notes","Goals","Stats","Settings"};
@@ -63,7 +65,7 @@ public class MainActivity extends Activity {
     }c.close();}
     private Button small(String label,Runnable r){Button b=new Button(this);b.setText(label);b.setTextSize(11);b.setAllCaps(false);b.setTextColor(WHITE);b.setBackground(shape(Color.rgb(65,54,91),12));b.setOnClickListener(v->r.run());return b;}
     private EditText field(String hint,boolean multiline){EditText e=new EditText(this);e.setSingleLine(!multiline);e.setTextColor(WHITE);e.setHintTextColor(MUTED);e.setHint(hint);e.setTextSize(14);e.setPadding(dp(12),dp(9),dp(12),dp(9));e.setBackground(shape(Color.rgb(39,37,54),12));if(multiline){e.setMinLines(3);e.setGravity(Gravity.TOP);}return e;}
-    private void dialog(String title,EditText[] fields,String[] hints,java.util.function.Consumer<String[]> save){LinearLayout box=vertical();box.setPadding(dp(8),dp(6),dp(8),dp(2));for(int i=0;i<fields.length;i++){fields[i]=field(hints[i],i==fields.length-1&&title.equals("New note"));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(9);box.addView(fields[i],lp);}new AlertDialog.Builder(this).setTitle(title).setView(box).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{String[] values=new String[fields.length];for(int i=0;i<fields.length;i++)values[i]=fields[i].getText().toString().trim();if(values[0].isEmpty()){Toast.makeText(this,"Please enter a title",Toast.LENGTH_SHORT).show();return;}save.accept(values);show(page);}).show();}
+    private void dialog(String title,EditText[] fields,String[] hints,Saver save){LinearLayout box=vertical();box.setPadding(dp(8),dp(6),dp(8),dp(2));for(int i=0;i<fields.length;i++){fields[i]=field(hints[i],i==fields.length-1&&title.equals("New note"));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(9);box.addView(fields[i],lp);}new AlertDialog.Builder(this).setTitle(title).setView(box).setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w)->{String[] values=new String[fields.length];for(int i=0;i<fields.length;i++)values[i]=fields[i].getText().toString().trim();if(values[0].isEmpty()){Toast.makeText(this,"Please enter a title",Toast.LENGTH_SHORT).show();return;}save.save(values);show(page);}).show();}
     private void dialogTask(){EditText[] f=new EditText[3];dialog("New task",f,new String[]{"Task name","Subject (optional)","Due date (e.g. 12 Nov)"},v->db.insert("tasks",v));}
     private void dialogSchedule(){EditText[] f=new EditText[3];dialog("New schedule",f,new String[]{"Class / subject","Day (e.g. Monday)","Time (e.g. 07:30 - 09:00)"},v->db.insert("schedule",v));}
     private void dialogNote(){EditText[] f=new EditText[2];dialog("New note",f,new String[]{"Note title","Write your note here..."},v->db.insert("notes",v));}
